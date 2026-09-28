@@ -2,26 +2,27 @@ package com.example.demo.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 public class HolaController {
     @GetMapping("/hola")
-    public String saludo() {
-        return "Hola, mundo. Te responde mi servidor.";
+    public ResponseEntity<String> saludo() {
+        return ResponseEntity.ok("Hola, mundo. Te responde mi servidor.");
     }
 
     @GetMapping("/anyo")
-    public int anyo() {
-        return 2026;
+    public ResponseEntity<Integer> anyo() {
+        return ResponseEntity.ok(2026);
     }
 
     @GetMapping("/estado")
-    public String estado() {
-        return "Servidor en funcionamiento";
+    public ResponseEntity<String> estado() {
+        return ResponseEntity.ok("Servidor en funcionamiento");
     }
 
     @GetMapping("/prestamos/resumen")
-    public String resumen() {
-        return "Esta aplicación gestionará los préstamos de material";
+    public ResponseEntity<String> resumen() {
+        return ResponseEntity.ok("Esta aplicación gestionará los préstamos de material");
     }
 }

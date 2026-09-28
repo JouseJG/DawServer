@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/proyectos")
@@ -23,9 +24,9 @@ public class ProyectoController {
     private int siguienteId = 1;
 
     @GetMapping
-    public List<Proyecto> lista(@RequestParam(name = "activo", required = false) Boolean activo) {
+    public ResponseEntity<List<Proyecto>> lista(@RequestParam(name = "activo", required = false) Boolean activo) {
         if(activo == null){
-            return  proyectos;
+            return ResponseEntity.ok(proyectos);
         }
 
         List<Proyecto> filtrado = new ArrayList<>(); 
@@ -34,36 +35,36 @@ public class ProyectoController {
                 filtrado.add(proyecto);
             }
         }
-        return filtrado;
+        return ResponseEntity.ok(filtrado);
     }
 
     @GetMapping("/{id}")
-    public Proyecto ficha_proyecto(@PathVariable(name = "id") int id){
+    public ResponseEntity<Proyecto> ficha_proyecto(@PathVariable(name = "id") int id){
         for (Proyecto proyecto : proyectos) {
             if (proyecto.getId() == id) {
-                return proyecto;
+                return ResponseEntity.ok(proyecto);
             }
         }
-        return null;
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/{id}/incidencias")
-    public String incidencias_proyecto(
+    public ResponseEntity<String> incidencias_proyecto(
         @RequestHeader(name="User-Agent") String cliente,
         @PathVariable(name = "id") int id, @RequestParam(name="estado", required=false) String estado){
-        return "Incidencias del proyecto "+id;
+        return ResponseEntity.ok("Incidencias del proyecto "+id);
     }
 
     @PostMapping
-    public Proyecto crear(@RequestBody Proyecto proyecto) {
+    public ResponseEntity<Proyecto> crear(@RequestBody Proyecto proyecto) {
         proyecto.setId(siguienteId);
         siguienteId += 1;
         proyectos.add(proyecto);
-        return proyecto;
+        return ResponseEntity.ok(proyecto);
     }
 
     @PutMapping("/{id}")
-    public Proyecto actualizar(
+    public ResponseEntity<Proyecto> actualizar(
         @PathVariable(name = "id") int id,
         @RequestBody Proyecto datos) {
             
@@ -71,15 +72,16 @@ public class ProyectoController {
             if (proyectos.get(i).getId() == id) {
                 datos.setId(id);
                 proyectos.set(i, datos);
-                return datos;
+                return ResponseEntity.ok(datos);
             }
         }
-        return null;
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable(name = "id") int id) {
+    public ResponseEntity<Void> eliminar(@PathVariable(name = "id") int id) {
         proyectos.removeIf(proyecto -> proyecto.getId() == id);
+        return ResponseEntity.noContent().build();
     }
 }
 
