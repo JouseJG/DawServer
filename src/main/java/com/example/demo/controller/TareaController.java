@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.demo.model.Tarea;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -46,7 +47,8 @@ public class TareaController {
         return null;
     }
 
-    @PostMapping
+    // @PostMapping
+    @PostMapping(consumes = "application/json", produces = "application/json")
     public Tarea crear(@RequestBody Tarea tarea) {
         tarea.setId(siguienteId);
         siguienteId += 1;
@@ -72,5 +74,21 @@ public class TareaController {
     @DeleteMapping("/{id}")
     public void eliminar(@PathVariable(name = "id") int id) {
         tareas.removeIf(tarea -> tarea.getId() == id);
+    }
+
+    @GetMapping("/diagnostico")
+    public String diagnostico(
+            @RequestHeader(name = "User-Agent") String cliente,
+            @RequestHeader(name = "Accept") String acepta) {
+
+        return "Me llama: " + cliente + "\nQuiere recibir: " + acepta;
+    }
+    
+    @PostMapping("/espejo")
+    public Tarea espejo(@RequestBody Tarea tarea) {
+        System.out.println("He recibido: " + tarea.getTitulo()
+                + " / " + tarea.getPrioridad()
+                + " / completada=" + tarea.isCompletada());
+        return tarea;
     }
 }

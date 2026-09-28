@@ -46,10 +46,12 @@ public class ProyectoController {
         return null;
     }
 
-    // @GetMapping("/{id}/incidencias")
-    // public String incidencias_proyecto(@PathVariable(name = "id") int id){
-    //     return "Incidencias del proyecto "+id;
-    // }
+    @GetMapping("/{id}/incidencias")
+    public String incidencias_proyecto(
+        @RequestHeader(name="User-Agent") String cliente,
+        @PathVariable(name = "id") int id, @RequestParam(name="estado", required=false) String estado){
+        return "Incidencias del proyecto "+id;
+    }
 
     @PostMapping
     public Proyecto crear(@RequestBody Proyecto proyecto) {
