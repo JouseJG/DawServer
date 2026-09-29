@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 public class Tarea {
 
     private int id;
+    private int proyectoId;
     private String titulo;
     private String prioridad;
     private boolean completada;
@@ -13,8 +14,9 @@ public class Tarea {
     public Tarea() {
     }
 
-    public Tarea(int id, String titulo, String prioridad, boolean completada) {
+    public Tarea(int id,int proyectoId, String titulo, String prioridad, boolean completada) {
         this.id = id;
+        this.proyectoId = proyectoId;
         this.titulo = titulo;
         this.prioridad = prioridad;
         this.completada = completada;
@@ -26,6 +28,14 @@ public class Tarea {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public Integer getProyectoId() {
+        return proyectoId;
+    }
+
+    public void setProyectoId(Integer proyectoId) {
+        this.proyectoId = proyectoId;
     }
 
     public String getTitulo() {

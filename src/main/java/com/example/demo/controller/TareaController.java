@@ -1,31 +1,48 @@
 package com.example.demo.controller;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.net.URI;
 
-import com.example.demo.model.Tarea;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import com.example.demo.memoria.MemoriaProyecto;
+import com.example.demo.model.Proyecto;
+import com.example.demo.model.Tarea;
 
 @RestController
 @RequestMapping("/tareas")
 public class TareaController {
 
-    private final List<Tarea> tareas = new ArrayList<>();
+    private final List<Tarea> tareas;
+    private final List<Proyecto> proyectos;
     private int siguienteId = 1;
 
+    public TareaController(MemoriaProyecto memoria) {
+        this.tareas = memoria.getTareas();
+        this.proyectos = memoria.getProyectos();
+    }
+    private Boolean proyectExist(int id){
+        boolean proyectoExiste = false;
+        for(Proyecto proyecto: proyectos){
+            if(id == proyecto.getId()){
+                proyectoExiste = true;
+            }
+        }
+        return proyectoExiste;
+    }
     @GetMapping
     public ResponseEntity<List<Tarea>> lista(@RequestParam(name = "completada", required = false) Boolean completada) {
         if (completada == null){
@@ -51,9 +68,12 @@ public class TareaController {
         return ResponseEntity.notFound().build();
     }
 
-    // @PostMapping
     @PostMapping(consumes = "application/json", produces = "application/json")
     public ResponseEntity<Tarea> crear(@RequestBody Tarea tarea) {
+        if (!proyectExist(tarea.getProyectoId())) {
+            return ResponseEntity.notFound().build();
+        }
+
         tarea.setId(siguienteId);
         siguienteId += 1;
         tareas.add(tarea);
@@ -74,6 +94,8 @@ public class TareaController {
         for (int i = 0; i < tareas.size(); i++) {
             if (tareas.get(i).getId() == id) {
                 datos.setId(id);
+                datos.setProyectoId(tareas.get(i).getProyectoId());
+                
                 tareas.set(i, datos);
                 return ResponseEntity.ok(tareas.get(i));
             }
@@ -102,6 +124,7 @@ public class TareaController {
                 + " / completada=" + tarea.isCompletada());
         return ResponseEntity.ok(tarea);
     }
+
     @PatchMapping("/{id}")
     public ResponseEntity<Tarea> modificar(
             @PathVariable(name = "id") int id,
@@ -113,6 +136,12 @@ public class TareaController {
                 }
                 if (cambios.getPrioridad() != null) {
                     tarea.setPrioridad(cambios.getPrioridad());
+                }
+                if (cambios.getProyectoId() != null){
+                    if (!proyectExist(cambios.getProyectoId())) {
+                        return ResponseEntity.notFound().build();
+                    }
+                    tarea.setProyectoId(cambios.getProyectoId());
                 }
                 return ResponseEntity.ok(tarea);
             }
