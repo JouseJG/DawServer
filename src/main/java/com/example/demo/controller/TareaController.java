@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.example.demo.dto.TareaResponse;
 import com.example.demo.memoria.MemoriaProyecto;
 import com.example.demo.model.Proyecto;
 import com.example.demo.model.Tarea;
@@ -44,32 +45,36 @@ public class TareaController {
         return proyectoExiste;
     }
     @GetMapping
-    public ResponseEntity<List<Tarea>> lista(@RequestParam(name = "completada", required = false) Boolean completada) {
+    public ResponseEntity<List<TareaResponse>> lista(@RequestParam(name = "completada", required = false) Boolean completada) {
+        List<TareaResponse> resultado = new ArrayList<>();
+        
         if (completada == null){
-            return ResponseEntity.ok(tareas);
+            for (Tarea tarea : tareas) {
+                resultado.add(TareaResponse.desde(tarea));
+            }
         }
-
-        List<Tarea> resultado = new ArrayList<>();
-        for (Tarea tarea : tareas) {
-            if (tarea.isCompletada() == completada) {
-                resultado.add(tarea);
+        else{
+            for (Tarea tarea : tareas) {
+                if (tarea.isCompletada() == completada) {
+                    resultado.add(TareaResponse.desde(tarea));
+                }
             }
         }
         return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Tarea> detalle(@PathVariable(name = "id") int id) {
+    public ResponseEntity<TareaResponse> detalle(@PathVariable int id) {
         for (Tarea tarea : tareas) {
             if (tarea.getId() == id) {
-                return ResponseEntity.ok(tarea);
+                return ResponseEntity.ok(TareaResponse.desde(tarea));
             }
         }
         return ResponseEntity.notFound().build();
     }
 
     @PostMapping(consumes = "application/json", produces = "application/json")
-    public ResponseEntity<Tarea> crear(@RequestBody Tarea tarea) {
+    public ResponseEntity<TareaResponse> crear(@RequestBody Tarea tarea) {
         if (!proyectExist(tarea.getProyectoId())) {
             return ResponseEntity.notFound().build();
         }
@@ -83,7 +88,7 @@ public class TareaController {
                 .path("/{id}")
                 .buildAndExpand(tarea.getId())
                 .toUri();
-        return ResponseEntity.created(ubicacion).body(tarea);
+        return ResponseEntity.created(ubicacion).body(TareaResponse.desde(tarea));
     }
 
     @PutMapping("/{id}")

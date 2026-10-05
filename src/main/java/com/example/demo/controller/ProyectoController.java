@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.dto.TareaResponse;
 import com.example.demo.memoria.MemoriaProyecto;
 import com.example.demo.model.Proyecto;
 import com.example.demo.model.Tarea;
@@ -66,7 +67,7 @@ public class ProyectoController {
     }
 
     @GetMapping("/{id}/tareas")
-    public ResponseEntity<List<Tarea>> tareasDelProyecto(@PathVariable(name = "id") int id) {
+    public ResponseEntity<List<TareaResponse>> tareasDelProyecto(@PathVariable(name = "id") int id) {
         boolean existe = false;
         for (Proyecto proyecto : proyectos) {
             if (proyecto.getId() == id) {
@@ -78,10 +79,10 @@ public class ProyectoController {
             return ResponseEntity.notFound().build();
         }
 
-        List<Tarea> resultado = new ArrayList<>();
+        List<TareaResponse> resultado = new ArrayList<>();
         for (Tarea tarea : tareas) {
             if (tarea.getProyectoId() == id) {
-                resultado.add(tarea);
+                resultado.add(TareaResponse.desde(tarea));
             }
         }
         return ResponseEntity.ok(resultado);

@@ -1,5 +1,8 @@
 package com.example.demo.model;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public class Tarea {
@@ -9,19 +12,29 @@ public class Tarea {
     private String titulo;
     private String prioridad;
     private boolean completada;
-
+    private List<String> etiquetas;
+    private LocalDate vencimiento;
+    private Responsable responsable;
+    private String notaInterna = "pendiente de revisión interna";
+    
     @JsonCreator
     public Tarea() {
     }
 
-    public Tarea(int id,int proyectoId, String titulo, String prioridad, boolean completada) {
+    public Tarea(int id,int proyectoId, String titulo, String prioridad, boolean completada, List<String> etiquetas, LocalDate vencimiento, Responsable  responsable) {
         this.id = id;
         this.proyectoId = proyectoId;
         this.titulo = titulo;
         this.prioridad = prioridad;
         this.completada = completada;
+        this.etiquetas = etiquetas;
+        this.vencimiento = vencimiento;
+        this.responsable = responsable;
+        
     }
-
+    public String getNotaInterna() {
+        return notaInterna;
+    }
     public int getId() {
         return id;
     }
@@ -60,5 +73,29 @@ public class Tarea {
 
     public void setCompletada(boolean completada) {
         this.completada = completada;
+    }
+
+    public List<String> getEtiquetas() {
+        return etiquetas;
+    }
+
+    public void setEtiquetas(List<String> etiquetas) {
+        this.etiquetas = etiquetas;
+    }
+
+    public LocalDate getVencimiento() {
+        return vencimiento;
+    }
+
+    public void setVencimiento(LocalDate vencimiento) {
+        this.vencimiento = vencimiento;
+    }
+
+    public Responsable getResponsable() {
+        return responsable;
+    }
+
+    public void setResponsable(Responsable responsable) {
+        this.responsable = responsable;
     }
 }
