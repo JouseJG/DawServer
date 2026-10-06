@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.dto.ProyectoPatchRequest;
+import com.example.demo.dto.ProyectoRequest;
 import com.example.demo.dto.TareaResponse;
 import com.example.demo.memoria.MemoriaProyecto;
 import com.example.demo.model.Proyecto;
@@ -89,9 +92,15 @@ public class ProyectoController {
     }
 
     @PostMapping
-    public ResponseEntity<Proyecto> crear(@RequestBody Proyecto proyecto) {
+    public ResponseEntity<Proyecto> crear(@RequestBody ProyectoRequest peticion) {
+        Proyecto proyecto = new Proyecto();
         proyecto.setId(siguienteId);
         siguienteId += 1;
+        proyecto.setNumeroDeIncidencias(peticion.getNumeroDeIncidencias());
+        proyecto.setNombre(peticion.getNombre());
+        proyecto.setDescripcion(peticion.getDescripcion());
+        proyecto.setActivo(peticion.isActivo());
+
         proyectos.add(proyecto);
         return ResponseEntity.ok(proyecto);
     }
@@ -99,13 +108,47 @@ public class ProyectoController {
     @PutMapping("/{id}")
     public ResponseEntity<Proyecto> actualizar(
         @PathVariable(name = "id") int id,
-        @RequestBody Proyecto datos) {
-            
+        @RequestBody ProyectoRequest peticion) {
+
         for (int i = 0; i < proyectos.size(); i++) {
             if (proyectos.get(i).getId() == id) {
-                datos.setId(id);
-                proyectos.set(i, datos);
-                return ResponseEntity.ok(datos);
+                Proyecto proyectoActualizado = new Proyecto();
+                proyectoActualizado.setId(id);
+                proyectoActualizado.setNumeroDeIncidencias(peticion.getNumeroDeIncidencias());
+                proyectoActualizado.setNombre(peticion.getNombre());
+                proyectoActualizado.setDescripcion(peticion.getDescripcion());
+                proyectoActualizado.setActivo(peticion.isActivo());
+
+                proyectos.set(i, proyectoActualizado);
+                return ResponseEntity.ok(proyectoActualizado);
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Proyecto> actualizarParcial(
+        @PathVariable(name = "id") int id,
+        @RequestBody ProyectoPatchRequest cambios) {
+
+        for (int i = 0; i < proyectos.size(); i++) {
+            if (proyectos.get(i).getId() == id) {
+                Proyecto proyecto = proyectos.get(i);
+
+                if (cambios.getNumeroDeIncidencias() != null) {
+                    proyecto.setNumeroDeIncidencias(cambios.getNumeroDeIncidencias());
+                }
+                if (cambios.getNombre() != null) {
+                    proyecto.setNombre(cambios.getNombre());
+                }
+                if (cambios.getDescripcion() != null) {
+                    proyecto.setDescripcion(cambios.getDescripcion());
+                }
+                if (cambios.getActivo() != null) {
+                    proyecto.setActivo(cambios.getActivo());
+                }
+
+                return ResponseEntity.ok(proyecto);
             }
         }
         return ResponseEntity.notFound().build();
