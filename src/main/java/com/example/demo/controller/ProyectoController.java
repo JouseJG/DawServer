@@ -23,6 +23,8 @@ import com.example.demo.memoria.MemoriaProyecto;
 import com.example.demo.model.Proyecto;
 import com.example.demo.model.Tarea;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/proyectos")
 public class ProyectoController {
@@ -92,7 +94,7 @@ public class ProyectoController {
     }
 
     @PostMapping
-    public ResponseEntity<Proyecto> crear(@RequestBody ProyectoRequest peticion) {
+    public ResponseEntity<Proyecto> crear(@Valid @RequestBody ProyectoRequest peticion) {
         Proyecto proyecto = new Proyecto();
         proyecto.setId(siguienteId);
         siguienteId += 1;
@@ -108,7 +110,7 @@ public class ProyectoController {
     @PutMapping("/{id}")
     public ResponseEntity<Proyecto> actualizar(
         @PathVariable(name = "id") int id,
-        @RequestBody ProyectoRequest peticion) {
+        @Valid @RequestBody ProyectoRequest peticion) {
 
         for (int i = 0; i < proyectos.size(); i++) {
             if (proyectos.get(i).getId() == id) {

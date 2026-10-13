@@ -26,6 +26,8 @@ import com.example.demo.memoria.MemoriaProyecto;
 import com.example.demo.model.Proyecto;
 import com.example.demo.model.Tarea;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/tareas")
 public class TareaController {
@@ -70,7 +72,7 @@ public class TareaController {
     }
 
     @PostMapping(consumes = "application/json", produces = "application/json")
-    public ResponseEntity<TareaResponse> crear(@RequestBody  TareaRequest peticion) {
+    public ResponseEntity<TareaResponse> crear(@Valid @RequestBody  TareaRequest peticion) {
         Tarea tarea = TareaMapper.aModelo(peticion);
         
         if (!proyectExist(tarea.getProyectoId())) {
