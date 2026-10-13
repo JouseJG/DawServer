@@ -21,6 +21,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.example.demo.dto.TareaPatchRequest;
 import com.example.demo.dto.TareaRequest;
 import com.example.demo.dto.TareaResponse;
+import com.example.demo.error.RecursoNoEncontradoException;
 import com.example.demo.mapper.TareaMapper;
 import com.example.demo.memoria.MemoriaProyecto;
 import com.example.demo.model.Proyecto;
@@ -62,13 +63,14 @@ public class TareaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TareaResponse> detalle(@PathVariable int id) {
+    public TareaResponse detalle(@PathVariable int id) {
         for (Tarea tarea : tareas) {
             if (tarea.getId() == id) {
-                return ResponseEntity.ok(TareaMapper.aRespuesta(tarea));
+                return (TareaMapper.aRespuesta(tarea));
             }
         }
-        return ResponseEntity.notFound().build();
+        // return ResponseEntity.notFound().build();
+        throw new RecursoNoEncontradoException("tarea", id);
     }
 
     @PostMapping(consumes = "application/json", produces = "application/json")

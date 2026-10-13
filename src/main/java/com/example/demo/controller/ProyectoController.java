@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.dto.ProyectoPatchRequest;
 import com.example.demo.dto.ProyectoRequest;
 import com.example.demo.dto.TareaResponse;
+import com.example.demo.error.ConflictoException;
 import com.example.demo.memoria.MemoriaProyecto;
 import com.example.demo.model.Proyecto;
 import com.example.demo.model.Tarea;
@@ -39,6 +40,14 @@ public class ProyectoController {
         this.tareas = memoria.getTareas();
     }
 
+    private boolean existeProyectoConNombre(String nombre) {
+        for (Proyecto proyecto : proyectos) {
+            if (proyecto.getNombre().equalsIgnoreCase(nombre)) {
+                return true;
+            }
+        }
+        return false;
+    }
     @GetMapping
     public ResponseEntity<List<Proyecto>> lista(@RequestParam(name = "activo", required = false) Boolean activo) {
         if(activo == null){
@@ -103,6 +112,9 @@ public class ProyectoController {
         proyecto.setDescripcion(peticion.getDescripcion());
         proyecto.setActivo(peticion.isActivo());
 
+        if (existeProyectoConNombre(peticion.getNombre())) {
+            throw new ConflictoException("Ya existe un proyecto con el nombre: " + peticion.getNombre());
+        }
         proyectos.add(proyecto);
         return ResponseEntity.ok(proyecto);
     }

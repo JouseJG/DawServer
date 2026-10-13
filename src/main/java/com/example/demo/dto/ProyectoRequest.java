@@ -1,6 +1,9 @@
 package com.example.demo.dto;
 
+import java.time.LocalDate;
+
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class ProyectoRequest {
@@ -11,6 +14,11 @@ public class ProyectoRequest {
     private String nombre;
     private String descripcion;
     private boolean activo;
+
+    @NotNull(message = "La fecha de inicio es obligatoria")
+    private LocalDate fechaInicio;
+
+    private LocalDate fechaFin;
 
     public ProyectoRequest() {
     }
@@ -45,5 +53,21 @@ public class ProyectoRequest {
 
     public void setActivo(boolean activo) {
         this.activo = activo;
+    }
+
+    public LocalDate getFechaInicio() {
+        return fechaInicio;
+    }
+    
+    public void setFechaInicio(LocalDate fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public LocalDate getFechaFin() {
+        return fechaFin;
+    }
+
+    public void setFechaFin(LocalDate fechaFin) {
+        this.fechaFin = fechaFin;
     }
 }

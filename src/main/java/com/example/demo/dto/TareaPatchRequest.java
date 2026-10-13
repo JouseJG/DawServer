@@ -1,8 +1,11 @@
 package com.example.demo.dto;
 
+import com.example.demo.validacion.PrioridadValida;
+
 public class TareaPatchRequest {
 
     private String titulo;
+    @PrioridadValida
     private String prioridad;
     private Boolean completada;
 
