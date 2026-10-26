@@ -1,7 +1,6 @@
 package com.example.demo.controller;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -24,8 +23,8 @@ import com.example.demo.dto.TareaResponse;
 import com.example.demo.error.RecursoNoEncontradoException;
 import com.example.demo.mapper.TareaMapper;
 import com.example.demo.memoria.MemoriaProyecto;
-import com.example.demo.model.Proyecto;
 import com.example.demo.model.Tarea;
+import com.example.demo.service.TareaService;
 
 import jakarta.validation.Valid;
 
@@ -33,41 +32,24 @@ import jakarta.validation.Valid;
 @RequestMapping("/tareas")
 public class TareaController {
 
-    private final List<Tarea> tareas;
-    private final List<Proyecto> proyectos;
-    private int siguienteId = 1;
+    private final TareaService tareaService;
 
     public TareaController(MemoriaProyecto memoria) {
-        this.tareas = memoria.getTareas();
-        this.proyectos = memoria.getProyectos();
+        this.tareaService = new TareaService(memoria);
     }
-    private Boolean proyectExist(int id){
-        boolean proyectoExiste = false;
-        for(Proyecto proyecto: proyectos){
-            if(id == proyecto.getId()){
-                proyectoExiste = true;
-            }
-        }
-        return proyectoExiste;
-    }
+
     @GetMapping
     public List<TareaResponse> lista(
         @RequestParam(name = "completada", required = false) Boolean completada) {
-        List<Tarea> seleccion = new ArrayList<>();
-        for (Tarea tarea : tareas) {
-            if (completada == null || tarea.isCompletada() == completada) {
-                seleccion.add(tarea);
-            }
-        }
+        List<Tarea> seleccion = tareaService.getTareas(completada);
         return TareaMapper.aRespuestas(seleccion);
     }
 
     @GetMapping("/{id}")
     public TareaResponse detalle(@PathVariable int id) {
-        for (Tarea tarea : tareas) {
-            if (tarea.getId() == id) {
-                return (TareaMapper.aRespuesta(tarea));
-            }
+        Tarea tarea = tareaService.getTareaById(id);
+        if (tarea != null) {
+            return TareaMapper.aRespuesta(tarea);
         }
         // return ResponseEntity.notFound().build();
         throw new RecursoNoEncontradoException("tarea", id);
@@ -75,22 +57,11 @@ public class TareaController {
 
     @PostMapping(consumes = "application/json", produces = "application/json")
     public ResponseEntity<TareaResponse> crear(@Valid @RequestBody  TareaRequest peticion) {
-        Tarea tarea = TareaMapper.aModelo(peticion);
-        
-        if (!proyectExist(tarea.getProyectoId())) {
+        if (!tareaService.proyectExist(peticion.getProyectoId())) {
             return ResponseEntity.notFound().build();
         }
 
-        tarea.setId(siguienteId);
-        siguienteId += 1;
-        tarea.setTitulo(peticion.getTitulo());
-        tarea.setPrioridad(peticion.getPrioridad());
-        tarea.setCompletada(false);
-        if (peticion.getProyectoId() != null) {
-            tarea.setProyectoId(peticion.getProyectoId());
-        }
-
-        tareas.add(tarea);
+        Tarea tarea =  tareaService.save(TareaMapper.aModelo(peticion));
 
         URI ubicacion = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -104,22 +75,19 @@ public class TareaController {
     public ResponseEntity<Tarea> actualizar(
         @PathVariable(name = "id") int id,
         @RequestBody Tarea datos) {
+        Tarea tarea = tareaService.getTareaById(id);
+        tarea = tareaService.update(tarea, datos);
 
-        for (int i = 0; i < tareas.size(); i++) {
-            if (tareas.get(i).getId() == id) {
-                datos.setId(id);
-                datos.setProyectoId(tareas.get(i).getProyectoId());
-                
-                tareas.set(i, datos);
-                return ResponseEntity.ok(tareas.get(i));
-            }
+        if (tarea != null) {
+            return ResponseEntity.ok(tarea);
         }
+
         return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable(name = "id") int id) {
-        tareas.removeIf(tarea -> tarea.getId() == id);
+        tareaService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -143,19 +111,9 @@ public class TareaController {
     public ResponseEntity<TareaResponse> modificar(
             @PathVariable(name = "id") int id,
             @RequestBody TareaPatchRequest cambios) {
-        for (Tarea tarea : tareas) {
-            if (tarea.getId() == id) {
-                if (cambios.getTitulo() != null) {
-                    tarea.setTitulo(cambios.getTitulo());
-                }
-                if (cambios.getPrioridad() != null) {
-                    tarea.setPrioridad(cambios.getPrioridad());
-                }
-                if (cambios.getCompletada() != null) {
-                    tarea.setCompletada(cambios.getCompletada());
-                }
-                return ResponseEntity.ok(TareaResponse.desde(tarea));
-            }
+        Tarea tarea = tareaService.modificar(id, cambios);
+        if (tarea != null) {
+            return ResponseEntity.ok(TareaResponse.desde(tarea));
         }
         return ResponseEntity.notFound().build();
     }

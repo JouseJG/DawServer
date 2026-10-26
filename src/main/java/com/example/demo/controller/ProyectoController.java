@@ -20,9 +20,12 @@ import com.example.demo.dto.ProyectoPatchRequest;
 import com.example.demo.dto.ProyectoRequest;
 import com.example.demo.dto.TareaResponse;
 import com.example.demo.error.ConflictoException;
+import com.example.demo.mapper.ProjectoMapper;
 import com.example.demo.memoria.MemoriaProyecto;
 import com.example.demo.model.Proyecto;
 import com.example.demo.model.Tarea;
+import com.example.demo.service.ProyectoService;
+import com.example.demo.service.TareaService;
 
 import jakarta.validation.Valid;
 
@@ -30,45 +33,24 @@ import jakarta.validation.Valid;
 @RequestMapping("/proyectos")
 public class ProyectoController {
 
-    private final List<Proyecto> proyectos;
-    private final List<Tarea> tareas;
-
-    private int siguienteId = 1;
+        private final ProyectoService proyectosService;
+        private final TareaService tareasService;
 
     public ProyectoController(MemoriaProyecto memoria) {
-        this.proyectos = memoria.getProyectos();
-        this.tareas = memoria.getTareas();
+        this.proyectosService = new ProyectoService(memoria);
+        this.tareasService = new TareaService(memoria);
     }
 
-    private boolean existeProyectoConNombre(String nombre) {
-        for (Proyecto proyecto : proyectos) {
-            if (proyecto.getNombre().equalsIgnoreCase(nombre)) {
-                return true;
-            }
-        }
-        return false;
-    }
     @GetMapping
     public ResponseEntity<List<Proyecto>> lista(@RequestParam(name = "activo", required = false) Boolean activo) {
-        if(activo == null){
-            return ResponseEntity.ok(proyectos);
-        }
-
-        List<Proyecto> filtrado = new ArrayList<>(); 
-        for (Proyecto proyecto : proyectos) {
-            if (activo == proyecto.getActivo()) {
-                filtrado.add(proyecto);
-            }
-        }
-        return ResponseEntity.ok(filtrado);
+        return ResponseEntity.ok(proyectosService.getProyectos(activo));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Proyecto> ficha_proyecto(@PathVariable(name = "id") int id){
-        for (Proyecto proyecto : proyectos) {
-            if (proyecto.getId() == id) {
-                return ResponseEntity.ok(proyecto);
-            }
+        Proyecto proyecto = proyectosService.getProyectoById(id);
+        if (proyecto != null) {
+            return ResponseEntity.ok(proyecto);
         }
         return ResponseEntity.notFound().build();
     }
@@ -82,95 +64,59 @@ public class ProyectoController {
 
     @GetMapping("/{id}/tareas")
     public ResponseEntity<List<TareaResponse>> tareasDelProyecto(@PathVariable(name = "id") int id) {
-        boolean existe = false;
-        for (Proyecto proyecto : proyectos) {
-            if (proyecto.getId() == id) {
-                existe = true;
-                break;
-            }
-        }
-        if (!existe) {
+        if (proyectosService.getProyectoById(id) == null) {
             return ResponseEntity.notFound().build();
         }
 
+        List<Tarea> tareas = tareasService.getTareasDelProyecto(id);
         List<TareaResponse> resultado = new ArrayList<>();
         for (Tarea tarea : tareas) {
-            if (tarea.getProyectoId() == id) {
-                resultado.add(TareaResponse.desde(tarea));
-            }
+            resultado.add(TareaResponse.desde(tarea));
         }
         return ResponseEntity.ok(resultado);
     }
 
     @PostMapping
     public ResponseEntity<Proyecto> crear(@Valid @RequestBody ProyectoRequest peticion) {
-        Proyecto proyecto = new Proyecto();
-        proyecto.setId(siguienteId);
-        siguienteId += 1;
-        proyecto.setNumeroDeIncidencias(peticion.getNumeroDeIncidencias());
-        proyecto.setNombre(peticion.getNombre());
-        proyecto.setDescripcion(peticion.getDescripcion());
-        proyecto.setActivo(peticion.isActivo());
-
-        if (existeProyectoConNombre(peticion.getNombre())) {
+        Proyecto proyecto = ProjectoMapper.aModelo(peticion);
+        if (proyectosService.existeProyectoConNombre(proyecto.getNombre())) {
             throw new ConflictoException("Ya existe un proyecto con el nombre: " + peticion.getNombre());
         }
-        proyectos.add(proyecto);
-        return ResponseEntity.ok(proyecto);
+        
+        return ResponseEntity.ok(proyectosService.save(proyecto));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Proyecto> actualizar(
         @PathVariable(name = "id") int id,
         @Valid @RequestBody ProyectoRequest peticion) {
-
-        for (int i = 0; i < proyectos.size(); i++) {
-            if (proyectos.get(i).getId() == id) {
-                Proyecto proyectoActualizado = new Proyecto();
-                proyectoActualizado.setId(id);
-                proyectoActualizado.setNumeroDeIncidencias(peticion.getNumeroDeIncidencias());
-                proyectoActualizado.setNombre(peticion.getNombre());
-                proyectoActualizado.setDescripcion(peticion.getDescripcion());
-                proyectoActualizado.setActivo(peticion.isActivo());
-
-                proyectos.set(i, proyectoActualizado);
-                return ResponseEntity.ok(proyectoActualizado);
+        
+            Proyecto proyecto = proyectosService.getProyectoById(id);
+            if (proyecto == null) {
+                return ResponseEntity.notFound().build();
             }
-        }
-        return ResponseEntity.notFound().build();
+            
+            proyecto = ProjectoMapper.aModelo(peticion);
+            proyecto.setId(id);
+            proyecto = proyectosService.update(proyecto);
+            return ResponseEntity.ok(proyecto);
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<Proyecto> actualizarParcial(
         @PathVariable(name = "id") int id,
         @RequestBody ProyectoPatchRequest cambios) {
-
-        for (int i = 0; i < proyectos.size(); i++) {
-            if (proyectos.get(i).getId() == id) {
-                Proyecto proyecto = proyectos.get(i);
-
-                if (cambios.getNumeroDeIncidencias() != null) {
-                    proyecto.setNumeroDeIncidencias(cambios.getNumeroDeIncidencias());
-                }
-                if (cambios.getNombre() != null) {
-                    proyecto.setNombre(cambios.getNombre());
-                }
-                if (cambios.getDescripcion() != null) {
-                    proyecto.setDescripcion(cambios.getDescripcion());
-                }
-                if (cambios.getActivo() != null) {
-                    proyecto.setActivo(cambios.getActivo());
-                }
-
-                return ResponseEntity.ok(proyecto);
-            }
+        Proyecto proyecto = proyectosService.getProyectoById(id);
+        if (proyecto == null) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(proyectosService.modificar(proyecto, cambios));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable(name = "id") int id) {
-        proyectos.removeIf(proyecto -> proyecto.getId() == id);
+        proyectosService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }
