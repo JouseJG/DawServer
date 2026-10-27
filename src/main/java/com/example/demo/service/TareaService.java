@@ -3,15 +3,24 @@ package com.example.demo.service;
 import java.util.List;
 
 import com.example.demo.dto.TareaPatchRequest;
+import com.example.demo.error.ReglaDeNegocioException;
 import com.example.demo.memoria.MemoriaProyecto;
+import com.example.demo.model.Proyecto;
 import com.example.demo.model.Tarea;
+import com.example.demo.repository.ProyectoRepository;
 import com.example.demo.repository.TareaRepository;
 
 public class TareaService {
     private final TareaRepository tareaRepository;
+    private final ProyectoRepository proyectoRepository;
+
+    public TareaService(TareaRepository tareaRepository, ProyectoRepository proyectoRepository) {
+        this.tareaRepository = tareaRepository;
+        this.proyectoRepository = proyectoRepository;
+    }
 
     public TareaService(MemoriaProyecto memoria) {
-        this.tareaRepository = new TareaRepository(memoria);
+        this(new TareaRepository(memoria), new ProyectoRepository(memoria));
     }
 
     public Boolean proyectExist(int id){
@@ -24,6 +33,16 @@ public class TareaService {
         return tareaRepository.getTareaById(id);
     }
     public Tarea save(Tarea tarea) {
+        Proyecto proyecto = proyectoRepository.getProyectoById(tarea.getProyectoId());
+        if (proyecto == null) {
+            throw new ReglaDeNegocioException(
+                    "No existe el proyecto " + tarea.getProyectoId());
+        }
+        if (!proyecto.getActivo()) {
+            throw new ReglaDeNegocioException(
+                    "El proyecto " + tarea.getProyectoId() + " está inactivo y no admite tareas nuevas");
+        }
+        tarea.setCompletada(false);
         return tareaRepository.save(tarea);
     }
     public Tarea update(Tarea tarea, Tarea datos) {

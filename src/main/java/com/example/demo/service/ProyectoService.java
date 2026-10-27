@@ -3,6 +3,7 @@ package com.example.demo.service;
 import java.util.List;
 
 import com.example.demo.dto.ProyectoPatchRequest;
+import com.example.demo.error.ReglaDeNegocioException;
 import com.example.demo.memoria.MemoriaProyecto;
 import com.example.demo.model.Proyecto;
 import com.example.demo.repository.ProyectoRepository;
@@ -10,8 +11,12 @@ import com.example.demo.repository.ProyectoRepository;
 public class ProyectoService {
     private final ProyectoRepository proyectoRepository;
 
+    public ProyectoService(ProyectoRepository proyectoRepository) {
+        this.proyectoRepository = proyectoRepository;
+    }
+
     public ProyectoService(MemoriaProyecto memoria) {
-        this.proyectoRepository = new ProyectoRepository(memoria);
+        this(new ProyectoRepository(memoria));
     }
 
     public boolean existeProyectoConNombre(String nombre) {
@@ -25,6 +30,10 @@ public class ProyectoService {
         return proyectoRepository.getProyectoById(id);
     }
     public Proyecto save(Proyecto proyecto) {
+        if (proyectoRepository.existeProyectoConNombre(proyecto.getNombre())) {
+            throw new ReglaDeNegocioException(
+                    "Ya existe un proyecto con el nombre " + proyecto.getNombre());
+        }
         return proyectoRepository.save(proyecto);
     }
     public Proyecto update(Proyecto proyecto) {

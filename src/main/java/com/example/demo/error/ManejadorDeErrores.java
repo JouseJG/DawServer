@@ -82,4 +82,11 @@ public class ManejadorDeErrores {
         }
         return problema;
     }
+
+    @ExceptionHandler(ReglaDeNegocioException.class)
+    public ProblemDetail reglaIncumplida(
+            ReglaDeNegocioException ex, HttpServletRequest peticion) {
+
+        return construir(HttpStatus.CONFLICT, ex.getMessage(), peticion, List.of());
+    }
 }
